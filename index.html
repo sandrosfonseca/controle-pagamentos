@@ -658,27 +658,54 @@ function resetForm(){
   document.getElementById('btn-del').style.display='none';
 }
 
-function loadForm(r){
-  document.getElementById('f-emenda').value=r.Emenda||'';
-  document.getElementById('f-vereador').value=r.Vereador||'';
-  document.getElementById('f-pa-emenda').value=r.PA_Emenda||'';
-  document.getElementById('f-pa-compra').value=r.PA_Compra||'';
-  document.getElementById('f-empenho').value=r.Empenho||'';
-  document.getElementById('f-valor').value=r.Valor||0;
-  document.getElementById('f-saldo').value=r.Saldo||0;
-  document.getElementById('f-plano').value=r.Plano_despesa||'';
-  document.getElementById('f-data').value=r.Data||'';
-  document.getElementById('f-oficio').value=r.Oficio||'';
-  document.getElementById('f-parcela').value=r.Parcela||'';
-  document.getElementById('f-mes').value=r.Mes||'';
-  document.getElementById('f-valor-pago').value=r.Valor_pago||0;
-  document.getElementById('f-pa-pagto').value=r.PA_Pagto||'';
-  document.querySelectorAll('.ferr').forEach(e=>e.classList.remove('show'));
-  document.getElementById('form-title').textContent='Editar lançamento — '+(r.Empenho||'');
-  document.getElementById('form-sub').textContent='Atualize os campos e salve.';
-  document.getElementById('btn-save').textContent='Salvar alterações';
-  document.getElementById('btn-del').style.display='inline-flex';
-  delTarget=r.id;
+function loadForm(id) {
+    const item = db.find(r => r.ID == id);
+    if (!item) return;
+
+    // Preenche os campos normais
+    document.getElementById('f-emenda').value = item['Emenda'] || '';
+    document.getElementById('f-vereador').value = item['Vereador(a)'] || '';
+    document.getElementById('f-pa-emenda').value = item['PA Emenda'] || '';
+    document.getElementById('f-pa-compra').value = item['PA Compra'] || '';
+    document.getElementById('f-empenho').value = item['Empenho'] || '';
+    document.getElementById('f-valor').value = item['Valor (R$)'] || '';
+    document.getElementById('f-saldo').value = item['Saldo (R$)'] || '';
+    document.getElementById('f-plano').value = item['Plano de despesa'] || '';
+    document.getElementById('f-oficio').value = item['Ofício nº'] || '';
+    document.getElementById('f-parcela').value = item['Parcela'] || '';
+    document.getElementById('f-mes').value = item['Mês'] || '';
+    document.getElementById('f-valor-pago').value = item['Valor pago (R$)'] || '';
+    document.getElementById('f-pa-pagto').value = item['PA Pagto nº'] || '';
+
+    // --- CORREÇÃO DA DATA ---
+    let dataRaw = item['Data'] || '';
+    let dataISO = '';
+
+    if (dataRaw) {
+        // Se já estiver no formato ISO (vier do próprio input), mantém
+        if (dataRaw.includes('-')) {
+            dataISO = dataRaw.split('T')[0]; 
+        } 
+        // Se estiver no formato BR (DD/MM/YYYY) vindo da planilha, converte
+        else if (dataRaw.includes('/')) {
+            const parts = dataRaw.split('/');
+            if (parts.length === 3) {
+                // parts[2] = Ano, parts[1] = Mês, parts[0] = Dia
+                dataISO = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+    }
+    document.getElementById('f-data').value = dataISO;
+    // ------------------------
+
+    // Atualiza o estado da edição
+    editId = id;
+    document.getElementById('form-title').innerText = 'Editar Pagamento';
+    document.getElementById('btn-save').innerText = 'Atualizar';
+    document.getElementById('btn-cancel').style.display = 'inline-block';
+    
+    // Rola até o formulário
+    document.getElementById('form-container').scrollIntoView({ behavior: 'smooth' });
 }
 
 function validateAll(){
