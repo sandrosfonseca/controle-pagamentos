@@ -1,3 +1,106 @@
+// ---- CONFIGURAÇÃO GOOGLE SHEETS ----
+const API_URL = "https://script.google.com/macros/s/AKfycbwhh8j1SFcU9IvWZKii7lYfyHIUf3gIFT3W4FA8Mhv6bKjbTTStJWArAynyLsKlb2d4tQ/exec";
+
+// ---- ESTADO ----
+let EMENDA = {num:"1039/2026", vereador:"Débora Camilo", valor_total:13000, proc:"11760/2025"};
+
+let DATA = [];
+let nextId=1, sortField='data', sortAsc=true, openRow=null, editingId=null, delTarget=null;
+let importPending=[];
+let loading = true;
+
+// Carregar dados do Google Sheets ao iniciar
+loadFromSheet();
+
+// ---- FUNÇÕES GOOGLE SHEETS ----
+async function loadFromSheet() {
+  try {
+    const response = await fetch(API_URL);
+    const result = await response.json();
+    if (result && result.result) {
+      DATA = result.result.map((r) => ({
+        id: r['ID'] || r['id'] || Math.random().toString(36).substr(2, 9),
+        DataCadastro: r['DataCadastro'] || '',
+        Emenda: r['Emenda'] || '',
+        Vereador: r['Vereador(a)'] || '',
+        PA_Emenda: r['PA Emenda'] || '',
+        PA_Compra: r['PA Compra'] || '',
+        Empenho: r['Empenho'] || '',
+        Valor: parseFloat(r['Valor (R$)']) || 0,
+        Saldo: parseFloat(r['Saldo (R$)']) || 0,
+        Plano_despesa: r['Plano de despesa'] || '',
+        Data: r['Data'] || '',
+        Oficio: r['Ofício nº'] || '',
+        Parcela: r['Parcela'] || '',
+        Mes: r['Mês'] || '',
+        Valor_pago: parseFloat(r['Valor pago (R$)']) || 0,
+        PA_Pagto: r['PA Pagto nº'] || ''
+      }));
+      nextId = DATA.length + 1;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar dados:', error);
+    showToast('Erro ao carregar dados da planilha', false);
+  } finally {
+    loading = false;
+    render();
+  }
+}
+
+async function saveToSheet(record, action = 'insert') {
+  try {
+    const payload = {
+      action: action,
+      data: {
+        id: record.id,
+        emenda: record.Emenda,
+        vereador: record.Vereador,
+        pa_emenda: record.PA_Emenda,
+        pa_compra: record.PA_Compra,
+        empenho: record.Empenho,
+        valor: record.Valor,
+        saldo: record.Saldo,
+        plano_despesa: record.Plano_despesa,
+        data: record.Data,
+        oficio: record.Oficio,
+        parcela: record.Parcela,
+        mes: record.Mes,
+        valor_pago: record.Valor_pago,
+        pa_pagto: record.PA_Pagto
+      }
+    };
+    
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao salvar:', error);
+    showToast('Erro ao salvar na planilha', false);
+    return false;
+  }
+}
+
+async function deleteFromSheet(id) {
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'delete', id: id})
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao excluir:', error);
+    showToast('Erro ao excluir da planilha', false);
+    return false;
+  }
+}
 
 // ---- UTILS ----
 const fmtR = v => 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -406,4 +509,3 @@ function confirmImport(){
 
 // ---- INIT ----
 render();
-</script>
