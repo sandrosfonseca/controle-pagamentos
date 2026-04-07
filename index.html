@@ -508,23 +508,23 @@ async function loadFromSheet() {
     const response = await fetch(API_URL);
     const result = await response.json();
     if (result && result.result) {
-      DATA = result.result.map((r, i) => ({
-        id: i + 1,
-        'DataCadastro': r['DataCadastro'] || '',
-        'Emenda': r['Emenda'] || '',
-        'Vereador(a)': r['Vereador(a)'] || '',
-        'PA Emenda': r['PA Emenda'] || '',
-        'PA Compra': r['PA Compra'] || '',
-        'Empenho': r['Empenho'] || '',
-        'Valor (R$)': parseFloat(r['Valor (R$)']) || 0,
-        'Saldo (R$)': parseFloat(r['Saldo (R$)']) || 0,
-        'Plano de despesa': r['Plano de despesa'] || '',
-        'Data': r['Data'] || '',
-        'Ofício nº': r['Ofício nº'] || '',
-        'Parcela': r['Parcela'] || '',
-        'Mês': r['Mês'] || '',
-        'Valor pago (R$)': parseFloat(r['Valor pago (R$)']) || 0,
-        'PA Pagto nº': r['PA Pagto nº'] || ''
+      DATA = result.result.map((r) => ({
+        id: r['ID'] || r['id'] || Math.random().toString(36).substr(2, 9),
+        DataCadastro: r['DataCadastro'] || '',
+        Emenda: r['Emenda'] || '',
+        Vereador: r['Vereador(a)'] || '',
+        PA_Emenda: r['PA Emenda'] || '',
+        PA_Compra: r['PA Compra'] || '',
+        Empenho: r['Empenho'] || '',
+        Valor: parseFloat(r['Valor (R$)']) || 0,
+        Saldo: parseFloat(r['Saldo (R$)']) || 0,
+        Plano_despesa: r['Plano de despesa'] || '',
+        Data: r['Data'] || '',
+        Oficio: r['Ofício nº'] || '',
+        Parcela: r['Parcela'] || '',
+        Mes: r['Mês'] || '',
+        Valor_pago: parseFloat(r['Valor pago (R$)']) || 0,
+        PA_Pagto: r['PA Pagto nº'] || ''
       }));
       nextId = DATA.length + 1;
     }
@@ -541,8 +541,23 @@ async function saveToSheet(record, action = 'insert') {
   try {
     const payload = {
       action: action,
-      id: record.id,
-      data: record
+      data: {
+        id: record.id,
+        emenda: record.Emenda,
+        vereador: record.Vereador,
+        pa_emenda: record.PA_Emenda,
+        pa_compra: record.PA_Compra,
+        empenho: record.Empenho,
+        valor: record.Valor,
+        saldo: record.Saldo,
+        plano_despesa: record.Plano_despesa,
+        data: record.Data,
+        oficio: record.Oficio,
+        parcela: record.Parcela,
+        mes: record.Mes,
+        valor_pago: record.Valor_pago,
+        pa_pagto: record.PA_Pagto
+      }
     };
     
     await fetch(API_URL, {
@@ -601,7 +616,7 @@ function updateHeader(){
   document.getElementById('eh-name').textContent='Vereador(a): '+EMENDA.vereador;
   document.getElementById('eh-ver').textContent='Proc. Adm. Câmara: '+EMENDA.proc;
   document.getElementById('tot-total').textContent=fmtR(EMENDA.valor_total);
-  const util=DATA.reduce((s,r)=>s+Number(r['Valor pago (R$)']),0);
+  const util=DATA.reduce((s,r)=>s+Number(r.Valor_pago||0),0);
   const saldo=EMENDA.valor_total-util;
   document.getElementById('tot-util').textContent=fmtR(util);
   document.getElementById('tot-saldo').textContent=fmtR(saldo);
@@ -644,22 +659,22 @@ function resetForm(){
 }
 
 function loadForm(r){
-  document.getElementById('f-emenda').value=r['Emenda']||'';
-  document.getElementById('f-vereador').value=r['Vereador(a)']||'';
-  document.getElementById('f-pa-emenda').value=r['PA Emenda']||'';
-  document.getElementById('f-pa-compra').value=r['PA Compra']||'';
-  document.getElementById('f-empenho').value=r['Empenho']||'';
-  document.getElementById('f-valor').value=r['Valor (R$)']||0;
-  document.getElementById('f-saldo').value=r['Saldo (R$)']||0;
-  document.getElementById('f-plano').value=r['Plano de despesa']||'';
-  document.getElementById('f-data').value=r['Data']||'';
-  document.getElementById('f-oficio').value=r['Ofício nº']||'';
-  document.getElementById('f-parcela').value=r['Parcela']||'';
-  document.getElementById('f-mes').value=r['Mês']||'';
-  document.getElementById('f-valor-pago').value=r['Valor pago (R$)']||0;
-  document.getElementById('f-pa-pagto').value=r['PA Pagto nº']||'';
+  document.getElementById('f-emenda').value=r.Emenda||'';
+  document.getElementById('f-vereador').value=r.Vereador||'';
+  document.getElementById('f-pa-emenda').value=r.PA_Emenda||'';
+  document.getElementById('f-pa-compra').value=r.PA_Compra||'';
+  document.getElementById('f-empenho').value=r.Empenho||'';
+  document.getElementById('f-valor').value=r.Valor||0;
+  document.getElementById('f-saldo').value=r.Saldo||0;
+  document.getElementById('f-plano').value=r.Plano_despesa||'';
+  document.getElementById('f-data').value=r.Data||'';
+  document.getElementById('f-oficio').value=r.Oficio||'';
+  document.getElementById('f-parcela').value=r.Parcela||'';
+  document.getElementById('f-mes').value=r.Mes||'';
+  document.getElementById('f-valor-pago').value=r.Valor_pago||0;
+  document.getElementById('f-pa-pagto').value=r.PA_Pagto||'';
   document.querySelectorAll('.ferr').forEach(e=>e.classList.remove('show'));
-  document.getElementById('form-title').textContent='Editar lançamento — '+(r['Empenho']||'');
+  document.getElementById('form-title').textContent='Editar lançamento — '+(r.Empenho||'');
   document.getElementById('form-sub').textContent='Atualize os campos e salve.';
   document.getElementById('btn-save').textContent='Salvar alterações';
   document.getElementById('btn-del').style.display='inline-flex';
@@ -682,31 +697,30 @@ function saveForm(){
   if(!validateAll()){showToast('Corrija os campos em vermelho.',false);return}
   const iso=document.getElementById('f-data').value;
   const rec={
-    'DataCadastro': new Date().toISOString(),
-    'Emenda': document.getElementById('f-emenda').value.trim(),
-    'Vereador(a)': document.getElementById('f-vereador').value.trim(),
-    'PA Emenda': document.getElementById('f-pa-emenda').value.trim(),
-    'PA Compra': document.getElementById('f-pa-compra').value.trim(),
-    'Empenho': document.getElementById('f-empenho').value.trim(),
-    'Valor (R$)': parseFloat(document.getElementById('f-valor').value),
-    'Saldo (R$)': parseFloat(document.getElementById('f-saldo').value),
-    'Plano de despesa': document.getElementById('f-plano').value.trim(),
-    'Data': isoToDisplay(iso),
-    'Ofício nº': document.getElementById('f-oficio').value.trim(),
-    'Parcela': document.getElementById('f-parcela').value,
-    'Mês': document.getElementById('f-mes').value,
-    'Valor pago (R$)': parseFloat(document.getElementById('f-valor-pago').value),
-    'PA Pagto nº': document.getElementById('f-pa-pagto').value.trim(),
+    id: editingId || nextId++,
+    Emenda: document.getElementById('f-emenda').value.trim(),
+    Vereador: document.getElementById('f-vereador').value.trim(),
+    PA_Emenda: document.getElementById('f-pa-emenda').value.trim(),
+    PA_Compra: document.getElementById('f-pa-compra').value.trim(),
+    Empenho: document.getElementById('f-empenho').value.trim(),
+    Valor: parseFloat(document.getElementById('f-valor').value),
+    Saldo: parseFloat(document.getElementById('f-saldo').value),
+    Plano_despesa: document.getElementById('f-plano').value.trim(),
+    Data: isoToDisplay(iso),
+    Oficio: document.getElementById('f-oficio').value.trim(),
+    Parcela: document.getElementById('f-parcela').value,
+    Mes: document.getElementById('f-mes').value,
+    Valor_pago: parseFloat(document.getElementById('f-valor-pago').value),
+    PA_Pagto: document.getElementById('f-pa-pagto').value.trim(),
   };
   if(editingId){
-    rec.id = editingId;
     const i=DATA.findIndex(r=>r.id===editingId);
     if(i!==-1)DATA[i]=rec;
     saveToSheet(rec, 'update');
     showToast('Lançamento atualizado!',true);
   }else{
-    rec.id=nextId++;
     DATA.push(rec);
+    nextId++;
     saveToSheet(rec, 'insert');
     showToast('Lançamento salvo!',true);
   }
@@ -785,27 +799,27 @@ function render(){
   if(!rows.length){tbody.innerHTML='<tr><td colspan="11" class="empty">Nenhum lançamento encontrado.</td></tr>';return}
 
   rows.forEach((r,i)=>{
-    const pb=r['Parcela']==='única'?'<span class="badge b-uni">Única</span>':'<span class="badge b-parc">'+r['Parcela']+'</span>';
-    const mb='<span class="badge b-mes">'+r['Mês']+'</span>';
+    const pb=r.Parcela==='única'?'<span class="badge b-uni">Única</span>':'<span class="badge b-parc">'+r.Parcela+'</span>';
+    const mb='<span class="badge b-mes">'+r.Mes+'</span>';
     const tr=document.createElement('tr');tr.className='dr';
     tr.innerHTML=
-      `<td class="mc">${r['Emenda']}</td>`+
-      `<td class="mc">${r['PA Emenda']}</td>`+
-      `<td class="mc">${r['PA Compra']}</td>`+
-      `<td class="mc">${r['Empenho']}</td>`+
-      `<td><span class="num">${fmtR(r['Valor (R$)'])}</span></td>`+
-      `<td><span class="num num-green">${fmtR(r['Saldo (R$)'])}</span></td>`+
-      `<td class="mc">${r['Data']}</td>`+
-      `<td class="mc">${r['Ofício nº']}</td>`+
+      `<td class="mc">${r.Emenda}</td>`+
+      `<td class="mc">${r.PA_Emenda}</td>`+
+      `<td class="mc">${r.PA_Compra}</td>`+
+      `<td class="mc">${r.Empenho}</td>`+
+      `<td><span class="num">${fmtR(r.Valor)}</span></td>`+
+      `<td><span class="num num-green">${fmtR(r.Saldo)}</span></td>`+
+      `<td class="mc">${r.Data}</td>`+
+      `<td class="mc">${r.Oficio}</td>`+
       `<td>${mb}</td>`+
-      `<td><span class="num num-amber">${fmtR(r['Valor pago (R$)'])}</span></td>`+
-      `<td class="mc">${r['PA Pagto nº']}</td>`;
+      `<td><span class="num num-amber">${fmtR(r.Valor_pago)}</span></td>`+
+      `<td class="mc">${r.PA_Pagto}</td>`;
     tr.onclick=()=>toggleDet(tr,r,i);
     tbody.appendChild(tr);
   });
 
   // summary row
-  const totalVP=rows.reduce((s,r)=>s+Number(r['Valor pago (R$)']),0);
+  const totalVP=rows.reduce((s,r)=>s+Number(r.Valor_pago||0),0);
   const sr=document.createElement('tr');sr.className='sum-row';
   sr.innerHTML=
     `<td colspan="4">Total (${rows.length} lançamentos)</td>`+
@@ -822,10 +836,10 @@ function toggleDet(tr,r,i){
   const det=document.createElement('tr');det.id='det-'+i;det.className='det-row';
   det.innerHTML=`<td colspan="11">
     <div class="det-grid">
-      <div class="di"><label>Vereador(a)</label><span>${r['Vereador(a)']}</span></div>
-      <div class="di"><label>Plano de despesa</label><span class="mc">${r['Plano de despesa']||'—'}</span></div>
-      <div class="di"><label>Parcela</label><span>${r['Parcela']}</span></div>
-      <div class="di"><label>PA Pagto</label><span class="mc">${r['PA Pagto nº']}</span></div>
+      <div class="di"><label>Vereador(a)</label><span>${r.Vereador}</span></div>
+      <div class="di"><label>Plano de despesa</label><span class="mc">${r.Plano_despesa||'—'}</span></div>
+      <div class="di"><label>Parcela</label><span>${r.Parcela}</span></div>
+      <div class="di"><label>PA Pagto</label><span class="mc">${r.PA_Pagto}</span></div>
     </div>
     <div class="det-actions">
       <button class="btn" onclick="editRecord(${r.id});event.stopPropagation()">Editar</button>
@@ -837,8 +851,8 @@ function toggleDet(tr,r,i){
 }
 
 // ---- EXPORT CSV ----
-const CSV_COLS=['Emenda','Vereador(a)','PA Emenda','PA Compra','Empenho','Valor (R$)','Saldo (R$)','Plano de despesa','Data','Ofício nº','Parcela','Mês','Valor pago (R$)','PA Pagto nº'];
-const CSV_HEADER='"Emenda","Vereador(a)","PA Emenda","PA Compra","Empenho","Valor (R$)","Saldo (R$)","Plano de despesa","Data","Ofício nº","Parcela","Mês","Valor pago (R$)","PA Pagto nº"';
+const CSV_COLS=['Emenda','Vereador','PA_Emenda','PA_Compra','Empenho','Valor','Saldo','Plano_despesa','Data','Oficio','Parcela','Mes','Valor_pago','PA_Pagto'];
+const CSV_HEADER='"Emenda","Vereador","PA Emenda","PA Compra","Empenho","Valor (R$)","Saldo (R$)","Plano de despesa","Data","Ofício nº","Parcela","Mês","Valor pago (R$)","PA Pagto nº"';
 
 function exportCSV(){
   const rows=DATA.map(r=>CSV_COLS.map(c=>`"${String(r[c]||'').replace(/"/g,'""')}"`).join(','));
