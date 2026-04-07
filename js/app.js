@@ -169,26 +169,26 @@ function resetForm(){
 }
 
 function loadForm(id) {
-    const item = db.find(r => r.ID == id);
+    const item = DATA.find(r => r.id == id);
     if (!item) return;
 
     // Preenche os campos normais
-    document.getElementById('f-emenda').value = item['Emenda'] || '';
-    document.getElementById('f-vereador').value = item['Vereador(a)'] || '';
-    document.getElementById('f-pa-emenda').value = item['PA Emenda'] || '';
-    document.getElementById('f-pa-compra').value = item['PA Compra'] || '';
-    document.getElementById('f-empenho').value = item['Empenho'] || '';
-    document.getElementById('f-valor').value = item['Valor (R$)'] || '';
-    document.getElementById('f-saldo').value = item['Saldo (R$)'] || '';
-    document.getElementById('f-plano').value = item['Plano de despesa'] || '';
-    document.getElementById('f-oficio').value = item['Ofício nº'] || '';
-    document.getElementById('f-parcela').value = item['Parcela'] || '';
-    document.getElementById('f-mes').value = item['Mês'] || '';
-    document.getElementById('f-valor-pago').value = item['Valor pago (R$)'] || '';
-    document.getElementById('f-pa-pagto').value = item['PA Pagto nº'] || '';
+    document.getElementById('f-emenda').value = item.Emenda || '';
+    document.getElementById('f-vereador').value = item.Vereador || '';
+    document.getElementById('f-pa-emenda').value = item.PA_Emenda || '';
+    document.getElementById('f-pa-compra').value = item.PA_Compra || '';
+    document.getElementById('f-empenho').value = item.Empenho || '';
+    document.getElementById('f-valor').value = item.Valor || '';
+    document.getElementById('f-saldo').value = item.Saldo || '';
+    document.getElementById('f-plano').value = item.Plano_despesa || '';
+    document.getElementById('f-oficio').value = item.Oficio || '';
+    document.getElementById('f-parcela').value = item.Parcela || '';
+    document.getElementById('f-mes').value = item.Mes || '';
+    document.getElementById('f-valor-pago').value = item.Valor_pago || '';
+    document.getElementById('f-pa-pagto').value = item.PA_Pagto || '';
 
     // --- CORREÇÃO DA DATA ---
-    let dataRaw = item['Data'] || '';
+    let dataRaw = item.Data || '';
     let dataISO = '';
 
     if (dataRaw) {
@@ -209,9 +209,10 @@ function loadForm(id) {
     // ------------------------
 
     // Atualiza o estado da edição
-    editId = id;
-    document.getElementById('form-title').innerText = 'Editar Pagamento';
-    document.getElementById('btn-save').innerText = 'Atualizar';
+    editingId = id;
+    document.getElementById('form-title').textContent = 'Editar Pagamento';
+    document.getElementById('btn-save').textContent = 'Atualizar';
+    document.getElementById('btn-del').style.display = 'inline-block';
     document.getElementById('btn-cancel').style.display = 'inline-block';
     
     // Rola até o formulário
@@ -279,13 +280,13 @@ function confirmDel(){
   if(!editingId)return;
   delTarget=editingId;
   const r=DATA.find(x=>x.id===editingId);
-  document.getElementById('md-del-body').textContent='Excluir lançamento do empenho '+r.empenho+'? Esta ação não pode ser desfeita.';
+  document.getElementById('md-del-body').textContent='Excluir lançamento do empenho '+r.Empenho+'? Esta ação não pode ser desfeita.';
   document.getElementById('modal-del').classList.add('open');
 }
 function deleteRecord(id){
   delTarget=id;
   const r=DATA.find(x=>x.id===id);
-  document.getElementById('md-del-body').textContent='Excluir lançamento do empenho '+r.empenho+'? Esta ação não pode ser desfeita.';
+  document.getElementById('md-del-body').textContent='Excluir lançamento do empenho '+r.Empenho+'? Esta ação não pode ser desfeita.';
   document.getElementById('modal-del').classList.add('open');
 }
 function closeMo(id){document.getElementById(id).classList.remove('open')}
@@ -315,8 +316,8 @@ function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   const fm=document.getElementById('fil-mes').value;
   let rows=DATA.filter(r=>{
-    if(fm&&r.mes!==fm)return false;
-    if(q&&![r.empenho,r.pa_compra,r.pa_emenda,r.pa_pagto,r.plano_despesa,r.mes].some(s=>String(s||'').toLowerCase().includes(q)))return false;
+    if(fm&&r.Mes!==fm)return false;
+    if(q&&![r.Empenho,r.PA_Compra,r.PA_Emenda,r.PA_Pagto,r.Plano_despesa,r.Mes].some(s=>String(s||'').toLowerCase().includes(q)))return false;
     return true;
   });
   rows.sort((a,b)=>{
