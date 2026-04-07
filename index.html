@@ -488,15 +488,77 @@ select.fi{appearance:none;-webkit-appearance:none;cursor:pointer;background-imag
 <div class="toast" id="toast"><div class="ti" id="ti">✓</div><span id="tm"></span></div>
 
 <script>
+// ---- CONFIGURAÇÃO GOOGLE SHEETS ----
+const API_URL = "https://script.google.com/macros/s/AKfycbwhh8j1SFcU9IvWZKii7lYfyHIUf3gIFT3W4FA8Mhv6bKjbTTStJWArAynyLsKlb2d4tQ/exec";
+
 // ---- ESTADO ----
 let EMENDA = {num:"1039/2026", vereador:"Débora Camilo", valor_total:13000, proc:"11760/2025"};
 
-let DATA = [
-  {id:1,emenda:"1039/2026",vereador:"Débora Camilo",pa_emenda:"1090/2026-78",pa_compra:"13940/2026-16",empenho:"5916/2026",valor:13000,saldo:9829.79,plano_despesa:"3.3.50.43",data:"18/03/2026",dataISO:"2026-03-18",oficio:"1",parcela:"única",mes:"Março",valor_pago:3170.21,pa_pagto:"1/2026-01"},
-  {id:2,emenda:"1039/2026",vereador:"Débora Camilo",pa_emenda:"1090/2026-78",pa_compra:"13936/2026-31",empenho:"5917/2026",valor:9829.79,saldo:9162.93,plano_despesa:"3.3.50.43",data:"18/03/2026",dataISO:"2026-03-18",oficio:"2",parcela:"única",mes:"Março",valor_pago:666.86,pa_pagto:"2/2026-05"}
-];
-let nextId=3, sortField='data', sortAsc=true, openRow=null, editingId=null, delTarget=null;
+let DATA = [];
+let nextId=1, sortField='data', sortAsc=true, openRow=null, editingId=null, delTarget=null;
 let importPending=[];
+let loading = true;
+
+// Carregar dados do Google Sheets ao iniciar
+loadFromSheet();
+
+// ---- FUNÇÕES GOOGLE SHEETS ----
+async function loadFromSheet() {
+  try {
+    const response = await fetch(API_URL);
+    const result = await response.json();
+    if (result && result.data) {
+      DATA = result.data.map((r, i) => ({...r, id: i + 1}));
+      nextId = DATA.length + 1;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar dados:', error);
+    showToast('Erro ao carregar dados da planilha', false);
+  } finally {
+    loading = false;
+    render();
+  }
+}
+
+async function saveToSheet(record, action = 'insert') {
+  try {
+    const payload = {
+      action: action,
+      id: record.id,
+      data: record
+    };
+    
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao salvar:', error);
+    showToast('Erro ao salvar na planilha', false);
+    return false;
+  }
+}
+
+async function deleteFromSheet(id) {
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'delete', id: id})
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao excluir:', error);
+    showToast('Erro ao excluir da planilha', false);
+    return false;
+  }
+}
 
 // ---- UTILS ----
 const fmtR = v => 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -621,8 +683,14 @@ function saveForm(){
   if(editingId){
     const i=DATA.findIndex(r=>r.id===editingId);
     if(i!==-1)DATA[i]={...rec,id:editingId};
+    saveToSheet(rec, 'update');
     showToast('Lançamento atualizado!',true);
-  }else{rec.id=nextId++;DATA.push(rec);showToast('Lançamento salvo!',true)}
+  }else{
+    rec.id=nextId++;
+    DATA.push(rec);
+    saveToSheet(rec, 'insert');
+    showToast('Lançamento salvo!',true);
+  }
   editingId=null;showView('lista');
 }
 
@@ -651,9 +719,12 @@ function deleteRecord(id){
   document.getElementById('modal-del').classList.add('open');
 }
 function closeMo(id){document.getElementById(id).classList.remove('open')}
-function delConfirm(){
+async function delConfirm(){
+  const idToDelete = delTarget;
   DATA=DATA.filter(r=>r.id!==delTarget);
-  closeMo('modal-del');showToast('Lançamento excluído.',true);
+  closeMo('modal-del');
+  await deleteFromSheet(idToDelete);
+  showToast('Lançamento excluído.',true);
   editingId=null;delTarget=null;render();
 }
 
