@@ -507,8 +507,25 @@ async function loadFromSheet() {
   try {
     const response = await fetch(API_URL);
     const result = await response.json();
-    if (result && result.data) {
-      DATA = result.data.map((r, i) => ({...r, id: i + 1}));
+    if (result && result.result) {
+      DATA = result.result.map((r, i) => ({
+        id: i + 1,
+        'DataCadastro': r['DataCadastro'] || '',
+        'Emenda': r['Emenda'] || '',
+        'Vereador(a)': r['Vereador(a)'] || '',
+        'PA Emenda': r['PA Emenda'] || '',
+        'PA Compra': r['PA Compra'] || '',
+        'Empenho': r['Empenho'] || '',
+        'Valor (R$)': parseFloat(r['Valor (R$)']) || 0,
+        'Saldo (R$)': parseFloat(r['Saldo (R$)']) || 0,
+        'Plano de despesa': r['Plano de despesa'] || '',
+        'Data': r['Data'] || '',
+        'Ofício nº': r['Ofício nº'] || '',
+        'Parcela': r['Parcela'] || '',
+        'Mês': r['Mês'] || '',
+        'Valor pago (R$)': parseFloat(r['Valor pago (R$)']) || 0,
+        'PA Pagto nº': r['PA Pagto nº'] || ''
+      }));
       nextId = DATA.length + 1;
     }
   } catch (error) {
@@ -584,7 +601,7 @@ function updateHeader(){
   document.getElementById('eh-name').textContent='Vereador(a): '+EMENDA.vereador;
   document.getElementById('eh-ver').textContent='Proc. Adm. Câmara: '+EMENDA.proc;
   document.getElementById('tot-total').textContent=fmtR(EMENDA.valor_total);
-  const util=DATA.reduce((s,r)=>s+Number(r.valor_pago),0);
+  const util=DATA.reduce((s,r)=>s+Number(r['Valor pago (R$)']),0);
   const saldo=EMENDA.valor_total-util;
   document.getElementById('tot-util').textContent=fmtR(util);
   document.getElementById('tot-saldo').textContent=fmtR(saldo);
@@ -627,22 +644,22 @@ function resetForm(){
 }
 
 function loadForm(r){
-  document.getElementById('f-emenda').value=r.emenda;
-  document.getElementById('f-vereador').value=r.vereador;
-  document.getElementById('f-pa-emenda').value=r.pa_emenda;
-  document.getElementById('f-pa-compra').value=r.pa_compra;
-  document.getElementById('f-empenho').value=r.empenho;
-  document.getElementById('f-valor').value=r.valor;
-  document.getElementById('f-saldo').value=r.saldo;
-  document.getElementById('f-plano').value=r.plano_despesa||'';
-  document.getElementById('f-data').value=r.dataISO||displayToISO(r.data)||'';
-  document.getElementById('f-oficio').value=r.oficio;
-  document.getElementById('f-parcela').value=r.parcela;
-  document.getElementById('f-mes').value=r.mes;
-  document.getElementById('f-valor-pago').value=r.valor_pago;
-  document.getElementById('f-pa-pagto').value=r.pa_pagto;
+  document.getElementById('f-emenda').value=r['Emenda']||'';
+  document.getElementById('f-vereador').value=r['Vereador(a)']||'';
+  document.getElementById('f-pa-emenda').value=r['PA Emenda']||'';
+  document.getElementById('f-pa-compra').value=r['PA Compra']||'';
+  document.getElementById('f-empenho').value=r['Empenho']||'';
+  document.getElementById('f-valor').value=r['Valor (R$)']||0;
+  document.getElementById('f-saldo').value=r['Saldo (R$)']||0;
+  document.getElementById('f-plano').value=r['Plano de despesa']||'';
+  document.getElementById('f-data').value=r['Data']||'';
+  document.getElementById('f-oficio').value=r['Ofício nº']||'';
+  document.getElementById('f-parcela').value=r['Parcela']||'';
+  document.getElementById('f-mes').value=r['Mês']||'';
+  document.getElementById('f-valor-pago').value=r['Valor pago (R$)']||0;
+  document.getElementById('f-pa-pagto').value=r['PA Pagto nº']||'';
   document.querySelectorAll('.ferr').forEach(e=>e.classList.remove('show'));
-  document.getElementById('form-title').textContent='Editar lançamento — '+r.empenho;
+  document.getElementById('form-title').textContent='Editar lançamento — '+(r['Empenho']||'');
   document.getElementById('form-sub').textContent='Atualize os campos e salve.';
   document.getElementById('btn-save').textContent='Salvar alterações';
   document.getElementById('btn-del').style.display='inline-flex';
@@ -665,24 +682,26 @@ function saveForm(){
   if(!validateAll()){showToast('Corrija os campos em vermelho.',false);return}
   const iso=document.getElementById('f-data').value;
   const rec={
-    emenda:document.getElementById('f-emenda').value.trim(),
-    vereador:document.getElementById('f-vereador').value.trim(),
-    pa_emenda:document.getElementById('f-pa-emenda').value.trim(),
-    pa_compra:document.getElementById('f-pa-compra').value.trim(),
-    empenho:document.getElementById('f-empenho').value.trim(),
-    valor:parseFloat(document.getElementById('f-valor').value),
-    saldo:parseFloat(document.getElementById('f-saldo').value),
-    plano_despesa:document.getElementById('f-plano').value.trim(),
-    data:isoToDisplay(iso), dataISO:iso,
-    oficio:document.getElementById('f-oficio').value.trim(),
-    parcela:document.getElementById('f-parcela').value,
-    mes:document.getElementById('f-mes').value,
-    valor_pago:parseFloat(document.getElementById('f-valor-pago').value),
-    pa_pagto:document.getElementById('f-pa-pagto').value.trim(),
+    'DataCadastro': new Date().toISOString(),
+    'Emenda': document.getElementById('f-emenda').value.trim(),
+    'Vereador(a)': document.getElementById('f-vereador').value.trim(),
+    'PA Emenda': document.getElementById('f-pa-emenda').value.trim(),
+    'PA Compra': document.getElementById('f-pa-compra').value.trim(),
+    'Empenho': document.getElementById('f-empenho').value.trim(),
+    'Valor (R$)': parseFloat(document.getElementById('f-valor').value),
+    'Saldo (R$)': parseFloat(document.getElementById('f-saldo').value),
+    'Plano de despesa': document.getElementById('f-plano').value.trim(),
+    'Data': isoToDisplay(iso),
+    'Ofício nº': document.getElementById('f-oficio').value.trim(),
+    'Parcela': document.getElementById('f-parcela').value,
+    'Mês': document.getElementById('f-mes').value,
+    'Valor pago (R$)': parseFloat(document.getElementById('f-valor-pago').value),
+    'PA Pagto nº': document.getElementById('f-pa-pagto').value.trim(),
   };
   if(editingId){
+    rec.id = editingId;
     const i=DATA.findIndex(r=>r.id===editingId);
-    if(i!==-1)DATA[i]={...rec,id:editingId};
+    if(i!==-1)DATA[i]=rec;
     saveToSheet(rec, 'update');
     showToast('Lançamento atualizado!',true);
   }else{
@@ -766,27 +785,27 @@ function render(){
   if(!rows.length){tbody.innerHTML='<tr><td colspan="11" class="empty">Nenhum lançamento encontrado.</td></tr>';return}
 
   rows.forEach((r,i)=>{
-    const pb=r.parcela==='única'?'<span class="badge b-uni">Única</span>':'<span class="badge b-parc">'+r.parcela+'</span>';
-    const mb='<span class="badge b-mes">'+r.mes+'</span>';
+    const pb=r['Parcela']==='única'?'<span class="badge b-uni">Única</span>':'<span class="badge b-parc">'+r['Parcela']+'</span>';
+    const mb='<span class="badge b-mes">'+r['Mês']+'</span>';
     const tr=document.createElement('tr');tr.className='dr';
     tr.innerHTML=
-      `<td class="mc">${r.emenda}</td>`+
-      `<td class="mc">${r.pa_emenda}</td>`+
-      `<td class="mc">${r.pa_compra}</td>`+
-      `<td class="mc">${r.empenho}</td>`+
-      `<td><span class="num">${fmtR(r.valor)}</span></td>`+
-      `<td><span class="num num-green">${fmtR(r.saldo)}</span></td>`+
-      `<td class="mc">${r.data}</td>`+
-      `<td class="mc">${r.oficio}</td>`+
+      `<td class="mc">${r['Emenda']}</td>`+
+      `<td class="mc">${r['PA Emenda']}</td>`+
+      `<td class="mc">${r['PA Compra']}</td>`+
+      `<td class="mc">${r['Empenho']}</td>`+
+      `<td><span class="num">${fmtR(r['Valor (R$)'])}</span></td>`+
+      `<td><span class="num num-green">${fmtR(r['Saldo (R$)'])}</span></td>`+
+      `<td class="mc">${r['Data']}</td>`+
+      `<td class="mc">${r['Ofício nº']}</td>`+
       `<td>${mb}</td>`+
-      `<td><span class="num num-amber">${fmtR(r.valor_pago)}</span></td>`+
-      `<td class="mc">${r.pa_pagto}</td>`;
+      `<td><span class="num num-amber">${fmtR(r['Valor pago (R$)'])}</span></td>`+
+      `<td class="mc">${r['PA Pagto nº']}</td>`;
     tr.onclick=()=>toggleDet(tr,r,i);
     tbody.appendChild(tr);
   });
 
   // summary row
-  const totalVP=rows.reduce((s,r)=>s+Number(r.valor_pago),0);
+  const totalVP=rows.reduce((s,r)=>s+Number(r['Valor pago (R$)']),0);
   const sr=document.createElement('tr');sr.className='sum-row';
   sr.innerHTML=
     `<td colspan="4">Total (${rows.length} lançamentos)</td>`+
@@ -803,10 +822,10 @@ function toggleDet(tr,r,i){
   const det=document.createElement('tr');det.id='det-'+i;det.className='det-row';
   det.innerHTML=`<td colspan="11">
     <div class="det-grid">
-      <div class="di"><label>Vereador(a)</label><span>${r.vereador}</span></div>
-      <div class="di"><label>Plano de despesa</label><span class="mc">${r.plano_despesa||'—'}</span></div>
-      <div class="di"><label>Parcela</label><span>${r.parcela}</span></div>
-      <div class="di"><label>PA Pagto</label><span class="mc">${r.pa_pagto}</span></div>
+      <div class="di"><label>Vereador(a)</label><span>${r['Vereador(a)']}</span></div>
+      <div class="di"><label>Plano de despesa</label><span class="mc">${r['Plano de despesa']||'—'}</span></div>
+      <div class="di"><label>Parcela</label><span>${r['Parcela']}</span></div>
+      <div class="di"><label>PA Pagto</label><span class="mc">${r['PA Pagto nº']}</span></div>
     </div>
     <div class="det-actions">
       <button class="btn" onclick="editRecord(${r.id});event.stopPropagation()">Editar</button>
@@ -818,8 +837,8 @@ function toggleDet(tr,r,i){
 }
 
 // ---- EXPORT CSV ----
-const CSV_COLS=['emenda','vereador','pa_emenda','pa_compra','empenho','valor','saldo','plano_despesa','data','oficio','parcela','mes','valor_pago','pa_pagto'];
-const CSV_HEADER='emenda,vereador,pa_emenda,pa_compra,empenho,valor,saldo,plano_despesa,data,oficio,parcela,mes,valor_pago,pa_pagto';
+const CSV_COLS=['Emenda','Vereador(a)','PA Emenda','PA Compra','Empenho','Valor (R$)','Saldo (R$)','Plano de despesa','Data','Ofício nº','Parcela','Mês','Valor pago (R$)','PA Pagto nº'];
+const CSV_HEADER='"Emenda","Vereador(a)","PA Emenda","PA Compra","Empenho","Valor (R$)","Saldo (R$)","Plano de despesa","Data","Ofício nº","Parcela","Mês","Valor pago (R$)","PA Pagto nº"';
 
 function exportCSV(){
   const rows=DATA.map(r=>CSV_COLS.map(c=>`"${String(r[c]||'').replace(/"/g,'""')}"`).join(','));
